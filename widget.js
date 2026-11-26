@@ -1,5 +1,3 @@
-<!-- ALL 4 ONE player widget: paste this whole block where you want the player -->
-<div id="all4one-widget"></div>
 (function () {
   // ---- SETTINGS ----
   var FEED = "podcast.xml";
