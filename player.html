@@ -203,12 +203,5 @@ li.on .t{color:var(--accent);font-weight:700}
     .catch(function () { $("msg").textContent = "Could not load the episodes."; });
 })();
 </script>
-<script>
-function send(){
-  parent.postMessage({a4oHeight: document.body.getBoundingClientRect().height}, "*");
-}
-new ResizeObserver(send).observe(document.body);
-window.addEventListener("load", send);
-</script>
 </body>
 </html>
