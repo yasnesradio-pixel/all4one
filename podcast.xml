@@ -3,13 +3,13 @@
   <channel>
     <title>ALL 4 ONE</title>
     <link>https://archive.org/search?query=all-4-one</link>
-    <atom:link href="https://yasnesradio-pixel.github.io/all4one/podcast.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="https://podcast.ksun66.com/podcast.xml" rel="self" type="application/rss+xml"/>
     <description>Two hours of intensive care from a DJ in a white coat: the latest releases, the classics that shaped his life, legends and newcomers, forgotten gems, all depending on his mood. One thing is certain: he will never play a record he doesn’t love. That’s just how it is… Take it or leave it. No shady compromises. Ad-free.
 Intensive care is over, but the music stays.</description>
     <language>en</language>
     <itunes:author>K-SUN66</itunes:author>
     <itunes:owner><itunes:name>K-SUN66</itunes:name><itunes:email>ksun66radio@gmail.com</itunes:email></itunes:owner>
-    <itunes:image href="https://yasnesradio-pixel.github.io/all4one/cover.jpg"/>
+    <itunes:image href="https://podcast.ksun66.com/cover.jpg"/>
     <itunes:explicit>false</itunes:explicit>
     <podcast:locked owner="ksun66radio@gmail.com">no</podcast:locked>
     <podcast:guid>ddbbc134-eb95-5466-b2ee-1f6fe132062d</podcast:guid>
