@@ -2,7 +2,7 @@
 <div id="all4one-widget"></div>
 (function () {
   // ---- SETTINGS ----
-  var FEED = "podcast.xml";;
+  var FEED = "podcast.xml";
   var THEME = "auto";        // "auto", "light" or "dark"
   var ACCENT = "#e63946";    // accent colour (buttons, current episode)
   var PAGE = 25;             // episodes shown at a time
