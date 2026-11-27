@@ -1,29 +1,36 @@
-name: Update podcast feed
+name: Update feed
 
 on:
   schedule:
-    - cron: "17 */6 * * *"   # toutes les 6 heures
-  workflow_dispatch:          # permet aussi de le lancer à la main
+    - cron: "0 6 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
+  pages: write
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Build feed
-        run: python build_feed.py
+
+      - name: Download the Podcloud feed
+        run: |
+          curl -fsSL --retry 3 -A "Mozilla/5.0 (feed-sync)" https://all4one.lepodcast.fr/rss -o new.xml
+          grep -q "<rss" new.xml
+          mv new.xml feed.xml
+
       - name: Commit if changed
         run: |
-          if ! git diff --quiet podcast.xml; then
-            git config user.name "feed-bot"
-            git config user.email "feed-bot@users.noreply.github.com"
-            git add podcast.xml
-            git commit -m "Add new episodes"
-            git push
-          fi
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add feed.xml
+          git diff --cached --quiet && echo "No change" && exit 0
+          git commit -m "Update feed"
+          git push
+
+      - name: Trigger the Pages build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "/repos/${{ github.repository }}/pages/builds" || true
