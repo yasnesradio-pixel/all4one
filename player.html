@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ALL 4 ONE</title>
-<style>body{margin:0}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0b0f1a}</style>
 </head>
 <body>
 <div id="all4one-widget"></div>
@@ -18,44 +21,49 @@
   ];
   var SHOW_NAME = "ALL 4 ONE";
   var SHOW_SOURCE = true;    // true = small line under the list showing which feed was loaded (set to false when tested)
-  var THEME = "auto";        // "auto", "light" or "dark"
-  var ACCENT = "#e63946";    // accent colour (buttons, current episode)
-  var PAGE = 25;             // episodes shown at a time
+  var ACCENT = "#F28C28";    // brand orange (buttons, current episode)
+  var MAX_EPISODES = 3;      // episodes listed (0 = all of them, with search and "Show more")
+  var PAGE = MAX_EPISODES > 0 ? MAX_EPISODES : 25;
   // ------------------
 
   var host = document.getElementById("all4one-widget");
   var root = host.attachShadow({ mode: "open" });   // isolates the widget from your site's CSS
-  var dark = THEME === "dark" || (THEME === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  var C = dark
-    ? { bg: "#121214", card: "#1e1e23", text: "#f1f1f4", muted: "#9c9ca8", line: "#303038" }
-    : { bg: "#ffffff", card: "#f3f3f6", text: "#16161a", muted: "#6b6b76", line: "#dedee5" };
+  var ACCENT_H = "#ff9d45";   // hover
+  var HEAD = "'Oswald','Arial Narrow',sans-serif";
+  var C = { bg: "#0b0f1a", card: "#121829", text: "#f3f4f7", muted: "#9aa3b8", line: "#242c44" };
 
   root.innerHTML =
     '<style>' +
     ':host{display:block}' +
     '*{box-sizing:border-box}' +
     '.w{background:' + C.bg + ';color:' + C.text + ';font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:4px}' +
-    '.player{display:flex;gap:18px;flex-wrap:wrap;background:' + C.card + ';border-radius:18px;padding:18px}' +
-    '.cover{width:150px;height:150px;border-radius:12px;object-fit:cover;background:' + C.line + ';flex:none}' +
+    '.player{display:flex;gap:18px;flex-wrap:wrap;background:' + C.card + ';border:1px solid ' + C.line + ';border-radius:10px;padding:18px}' +
+    '.cover{width:150px;height:150px;border-radius:0;object-fit:cover;background:' + C.line + ';flex:none;box-shadow:6px 6px 0 ' + ACCENT + ',0 0 30px rgba(242,140,40,.28);transition:transform .25s ease,box-shadow .25s ease}' +
+    '.cover:hover{transform:translate(-2px,-2px);box-shadow:9px 9px 0 ' + ACCENT + ',0 0 36px rgba(242,140,40,.4)}' +
     '.main{flex:1;min-width:240px;display:flex;flex-direction:column;gap:12px;justify-content:center}' +
-    '.show{color:' + C.muted + ';font-size:13px;text-transform:uppercase;letter-spacing:.06em}' +
-    '.title{font-size:19px;font-weight:700;margin:0}' +
+    '.show{font-family:' + HEAD + ';font-weight:600;color:' + ACCENT + ';font-size:13px;text-transform:uppercase;letter-spacing:2px}' +
+    '.title{font-family:' + HEAD + ';font-size:21px;font-weight:600;line-height:1.25;margin:0}' +
     '.bar{display:flex;align-items:center;gap:10px}' +
     '.bar span{color:' + C.muted + ';font-size:12px;min-width:42px;font-variant-numeric:tabular-nums}' +
     'input[type=range]{flex:1;accent-color:' + ACCENT + ';height:24px}' +
     '.ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}' +
-    'button,select,.dl{font:inherit;color:' + C.text + ';background:' + C.bg + ';border:1px solid ' + C.line + ';border-radius:999px;padding:8px 14px;cursor:pointer;text-decoration:none}' +
-    'button:hover,.dl:hover{border-color:' + ACCENT + '}' +
-    '#play{background:' + ACCENT + ';border-color:' + ACCENT + ';color:#fff;width:56px;height:56px;padding:0;font-size:22px}' +
+    'button,select,.dl{font-family:' + HEAD + ';font-weight:600;letter-spacing:1px;text-transform:uppercase;font-size:14px;line-height:1.2;color:' + ACCENT + ';background:transparent;border:2px solid ' + ACCENT + ';border-radius:4px;padding:8px 16px;cursor:pointer;text-decoration:none;transition:background .2s ease,color .2s ease,border-color .2s ease}' +
+    'button:hover,.dl:hover{background:' + ACCENT + ';color:' + C.bg + '}' +
+    'select option{background:' + C.bg + ';color:' + C.text + '}' +
+    '#play{background:' + ACCENT + ';color:' + C.bg + ';min-width:120px}' +
+    '#play:hover{background:' + ACCENT_H + ';border-color:' + ACCENT_H + '}' +
     '.sp{flex:1}' +
-    '#search{width:100%;margin:18px 0 8px;padding:11px 16px;border:1px solid ' + C.line + ';border-radius:12px;background:' + C.bg + ';color:' + C.text + ';font:inherit}' +
+    '#search{width:100%;margin:18px 0 8px;padding:11px 16px;border:1px solid ' + C.line + ';border-radius:4px;background:' + C.card + ';color:' + C.text + ';font:inherit}' +
     'ul{list-style:none;margin:0;padding:0}' +
     'li{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:11px 8px;border-bottom:1px solid ' + C.line + ';cursor:pointer;border-radius:8px}' +
     'li:hover{background:' + C.card + '}' +
     'li.on .t{color:' + ACCENT + ';font-weight:700}' +
-    '.tl{flex-basis:100%;white-space:pre-wrap;color:' + C.muted + ';font-size:13px;line-height:1.5;padding:8px 0 6px 54px;max-height:340px;overflow:auto;cursor:text}' +
-    '.n{color:' + C.muted + ';min-width:42px;font-variant-numeric:tabular-nums}' +
+    '.tl{flex-basis:100%;white-space:pre-wrap;color:' + C.muted + ';font-size:13px;line-height:1.5;padding:8px 0 6px 58px;max-height:340px;overflow:auto;cursor:text}' +
+    '.n{font-family:' + HEAD + ';font-weight:600;color:' + ACCENT + ';min-width:46px}' +
     '.t{flex:1}' +
+    '.arw{padding:6px 9px;line-height:0}' +
+    '.arw svg{transition:transform .2s ease}' +
+    'li.open .arw svg{transform:rotate(180deg)}' +
     '.d{color:' + C.muted + ';font-size:12px;white-space:nowrap}' +
     '#more{display:block;margin:16px auto}' +
     '.msg{color:' + C.muted + ';padding:16px 0}' +
@@ -69,7 +77,7 @@
     '<div class="bar"><span id="cur">0:00</span><input type="range" id="seek" min="0" max="1000" value="0"><span id="dur">0:00</span></div>' +
     '<div class="ctl">' +
     '<button id="back" title="Back 15 seconds">↺ 15</button>' +
-    '<button id="play" title="Play / Pause">▶</button>' +
+    '<button id="play" title="Play / Pause">▶ Play</button>' +
     '<button id="fwd" title="Forward 30 seconds">30 ↻</button>' +
     '<select id="speed" title="Speed"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>' +
     '<span class="sp"></span>' +
@@ -84,7 +92,8 @@
   var $ = function (id) { return root.getElementById(id); };
   var audio = new Audio();
   audio.preload = "none";
-  var eps = [], view = [], shown = 0, current = -1;
+  var eps = [], view = [], shown = 0, current = -1, opened = {};
+  if (MAX_EPISODES > 0) $("search").style.display = "none";
 
   function fmt(s) {
     if (!isFinite(s)) return "0:00";
@@ -127,14 +136,15 @@
   function mark() {
     var items = $("list").children;
     for (var k = 0; k < items.length; k++) {
-      var on = (+items[k].getAttribute("data-i") === current);
-      items[k].className = on ? "on" : "";
+      var idx = +items[k].getAttribute("data-i");
+      var isOpen = !!opened[idx] && !!(eps[idx] && eps[idx].desc);
+      items[k].className = (idx === current ? "on" : "") + (isOpen ? " open" : "");
       var old = items[k].querySelector(".tl");
       if (old) old.remove();
-      if (on && eps[current] && eps[current].desc) {
+      if (isOpen) {
         var tl = document.createElement("div");
         tl.className = "tl";
-        tl.textContent = eps[current].desc;
+        tl.textContent = eps[idx].desc;
         tl.onclick = function (e) { e.stopPropagation(); };
         items[k].appendChild(tl);
       }
@@ -147,12 +157,22 @@
     var end = Math.min(shown + PAGE, view.length);
     for (; shown < end; shown++) {
       var ep = view[shown], li = document.createElement("li");
-      li.setAttribute("data-i", eps.indexOf(ep));
+      var idx = eps.indexOf(ep);
+      li.setAttribute("data-i", idx);
       var n = document.createElement("span"); n.className = "n"; n.textContent = ep.num ? "#" + ep.num : "";
       var t = document.createElement("span"); t.className = "t"; t.textContent = ep.title;
       var d = document.createElement("span"); d.className = "d"; d.textContent = ep.date;
       li.appendChild(n); li.appendChild(t); li.appendChild(d);
-      li.onclick = (function (i) { return function () { select(i, true); }; })(eps.indexOf(ep));
+      if (ep.desc) {
+        var a = document.createElement("button");
+        a.className = "arw";
+        a.title = "Show / hide the playlist";
+        a.setAttribute("aria-label", "Show or hide the playlist");
+        a.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 4.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+        a.onclick = (function (i) { return function (e) { e.stopPropagation(); opened[i] = !opened[i]; mark(); }; })(idx);
+        li.appendChild(a);
+      }
+      li.onclick = (function (i) { return function () { if (i !== current) opened[i] = true; select(i, true); }; })(idx);
       list.appendChild(li);
     }
     $("more").style.display = shown < view.length ? "" : "none";
@@ -179,8 +199,8 @@
     if (audio.duration) audio.currentTime = audio.duration * this.value / 1000;
   };
 
-  audio.onplay = function () { $("play").textContent = "❚❚"; };
-  audio.onpause = function () { $("play").textContent = "▶"; };
+  audio.onplay = function () { $("play").textContent = "❚❚ Pause"; };
+  audio.onpause = function () { $("play").textContent = "▶ Play"; };
   audio.onloadedmetadata = function () { $("dur").textContent = fmt(audio.duration); };
   audio.ontimeupdate = function () {
     $("cur").textContent = fmt(audio.currentTime);
@@ -190,7 +210,10 @@
         localStorage.setItem("a4o:" + eps[current].url, audio.currentTime);
     } catch (e) {}
   };
-  audio.onended = function () { if (current + 1 < eps.length) select(current + 1, true); };
+  audio.onended = function () {
+    var limit = MAX_EPISODES > 0 ? Math.min(MAX_EPISODES, eps.length) : eps.length;
+    if (current + 1 < limit) select(current + 1, true);
+  };
 
   var defaultCover = "";
 
@@ -231,7 +254,8 @@
         $("cover").src = defaultCover;
         $("show").textContent = SHOW_NAME;
         if (SHOW_SOURCE) $("src").textContent = "Source: " + (n === 0 ? "Podcloud copy" : "backup feed") + " \u2022 " + eps.length + " episodes";
-        view = eps.slice();
+        view = MAX_EPISODES > 0 ? eps.slice(0, MAX_EPISODES) : eps.slice();
+        opened = { 0: true };
         render(true);
         select(0, false);
       })
