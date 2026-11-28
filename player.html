@@ -23,6 +23,7 @@
   var SHOW_SOURCE = true;    // true = small line under the list showing which feed was loaded (set to false when tested)
   var ACCENT = "#F28C28";    // brand orange (buttons, current episode)
   var MAX_EPISODES = 3;      // episodes listed (0 = all of them, with search and "Show more")
+  var COVER_EFFECT = "fade";  // when the cover changes: "fade", "slide" or "none"
   var PAGE = MAX_EPISODES > 0 ? MAX_EPISODES : 25;
   // ------------------
 
@@ -38,9 +39,11 @@
     '*{box-sizing:border-box}' +
     '.w{background:' + C.bg + ';color:' + C.text + ';font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:4px}' +
     '.player{display:flex;gap:18px;flex-wrap:wrap;background:' + C.card + ';border:1px solid ' + C.line + ';border-radius:10px;padding:18px}' +
-    '.cover{width:150px;height:150px;border-radius:0;object-fit:cover;background:' + C.line + ';flex:none;box-shadow:6px 6px 0 ' + ACCENT + ',0 0 30px rgba(242,140,40,.28);transition:transform .25s ease,box-shadow .25s ease}' +
-    '.cover:hover{transform:translate(-2px,-2px);box-shadow:9px 9px 0 ' + ACCENT + ',0 0 36px rgba(242,140,40,.4)}' +
-    '.main{flex:1;min-width:240px;display:flex;flex-direction:column;gap:12px;justify-content:center}' +
+    '.cover{width:150px;height:150px;border-radius:0;object-fit:cover;background:' + C.line + ';flex:none;transition:opacity .3s ease,transform .3s ease}' +
+    '.cover.out{opacity:0}' +
+    '.cover.slide.out{transform:translateX(-28px)}' +
+    '.cover.pre{transition:none;opacity:0}' +
+    '.cover.slide.pre{transform:translateX(28px)}' +
     '.show{font-family:' + HEAD + ';font-weight:600;color:' + ACCENT + ';font-size:13px;text-transform:uppercase;letter-spacing:2px}' +
     '.title{font-family:' + HEAD + ';font-size:21px;font-weight:600;line-height:1.25;margin:0}' +
     '.bar{display:flex;align-items:center;gap:10px}' +
@@ -58,7 +61,10 @@
     'li{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:11px 8px;border-bottom:1px solid ' + C.line + ';cursor:pointer;border-radius:8px}' +
     'li:hover{background:' + C.card + '}' +
     'li.on .t{color:' + ACCENT + ';font-weight:700}' +
-    '.tl{flex-basis:100%;white-space:pre-wrap;color:' + C.muted + ';font-size:13px;line-height:1.5;padding:8px 0 6px 58px;max-height:340px;overflow:auto;cursor:text}' +
+    '.tl{flex-basis:100%;white-space:pre-wrap;color:' + C.muted + ';font-size:13px;line-height:1.5;padding:8px 0 6px 118px;max-height:340px;overflow:auto;cursor:text;animation:tlin .3s ease}' +
+    '@media(max-width:560px){.tl{padding-left:0}}' +
+    '@keyframes tlin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}' +
+    '.th{width:48px;height:48px;object-fit:cover;border-radius:0;flex:none;background:' + C.line + '}' +
     '.n{font-family:' + HEAD + ';font-weight:600;color:' + ACCENT + ';min-width:46px}' +
     '.t{flex:1}' +
     '.arw{padding:6px 9px;line-height:0}' +
@@ -94,6 +100,7 @@
   audio.preload = "none";
   var eps = [], view = [], shown = 0, current = -1, opened = {};
   if (MAX_EPISODES > 0) $("search").style.display = "none";
+  if (COVER_EFFECT === "slide") $("cover").classList.add("slide");
 
   function fmt(s) {
     if (!isFinite(s)) return "0:00";
@@ -106,6 +113,27 @@
     return e ? e.textContent : "";
   }
 
+  var coverTimer = 0;
+  function setCover(src) {
+    var img = $("cover");
+    clearTimeout(coverTimer);
+    var cur = img.getAttribute("src");
+    if (!src || cur === src) return;
+    if (!cur || COVER_EFFECT === "none") { img.src = src; return; }
+    img.classList.remove("pre");
+    img.classList.add("out");                       // old cover fades / slides out
+    coverTimer = setTimeout(function () {
+      img.classList.remove("out");
+      img.classList.add("pre");                     // new cover waits, invisible
+      img.onload = img.onerror = function () {
+        img.onload = img.onerror = null;
+        void img.offsetWidth;
+        img.classList.remove("pre");                // new cover fades / slides in
+      };
+      img.src = src;
+    }, 300);
+  }
+
   function select(i, autoplay) {
     var ep = eps[i];
     if (!ep) return;
@@ -114,8 +142,11 @@
     audio.src = ep.url;
     audio.playbackRate = parseFloat($("speed").value);
     $("title").textContent = ep.title;
-    $("cover").src = ep.img || defaultCover;
+    setCover(ep.img || defaultCover);
     $("dl").href = ep.url;
+    $("dl").style.display = "";
+    $("show").style.display = "";
+    $("show").textContent = SHOW_NAME;
     try {
       var pos = parseFloat(localStorage.getItem("a4o:" + ep.url));
       if (pos > 5) audio.addEventListener("loadedmetadata", function f() {
@@ -140,8 +171,8 @@
       var isOpen = !!opened[idx] && !!(eps[idx] && eps[idx].desc);
       items[k].className = (idx === current ? "on" : "") + (isOpen ? " open" : "");
       var old = items[k].querySelector(".tl");
-      if (old) old.remove();
-      if (isOpen) {
+      if (!isOpen && old) old.remove();
+      if (isOpen && !old) {
         var tl = document.createElement("div");
         tl.className = "tl";
         tl.textContent = eps[idx].desc;
@@ -162,7 +193,10 @@
       var n = document.createElement("span"); n.className = "n"; n.textContent = ep.num ? "#" + ep.num : "";
       var t = document.createElement("span"); t.className = "t"; t.textContent = ep.title;
       var d = document.createElement("span"); d.className = "d"; d.textContent = ep.date;
-      li.appendChild(n); li.appendChild(t); li.appendChild(d);
+      var th = document.createElement("img");
+      th.className = "th"; th.alt = ""; th.loading = "lazy";
+      th.src = ep.img || defaultCover;
+      li.appendChild(th); li.appendChild(n); li.appendChild(t); li.appendChild(d);
       if (ep.desc) {
         var a = document.createElement("button");
         a.className = "arw";
@@ -250,14 +284,15 @@
         var res = parse(txt);
         if (!res.eps.length) throw new Error("empty feed");
         eps = res.eps;
-        defaultCover = res.cover;
+        defaultCover = res.cover || res.eps[0].img || "";
+        $("show").style.display = "none";
+        $("title").textContent = SHOW_NAME;
+        $("dl").style.display = "none";
         $("cover").src = defaultCover;
-        $("show").textContent = SHOW_NAME;
         if (SHOW_SOURCE) $("src").textContent = "Source: " + (n === 0 ? "Podcloud copy" : "backup feed") + " \u2022 " + eps.length + " episodes";
         view = MAX_EPISODES > 0 ? eps.slice(0, MAX_EPISODES) : eps.slice();
         opened = { 0: true };
         render(true);
-        select(0, false);
       })
       .catch(function (e) {
         errs.push((n === 0 ? "Podcloud" : "backup") + ": " + (e && e.message ? e.message : e));
