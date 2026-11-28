@@ -289,7 +289,7 @@
         $("title").textContent = SHOW_NAME;
         $("dl").style.display = "none";
         $("cover").src = defaultCover;
-        if (SHOW_SOURCE) $("src").textContent = "Source: " + (n === 0 ? "Podcloud copy" : "backup feed") + " \u2022 " + eps.length + " episodes";
+        if (SHOW_SOURCE) $("src").textContent = eps.length + " episodes" + (n === 0 ? " \u2022 Updated daily" : "");
         view = MAX_EPISODES > 0 ? eps.slice(0, MAX_EPISODES) : eps.slice();
         opened = { 0: true };
         render(true);
