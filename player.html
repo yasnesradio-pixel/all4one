@@ -16,15 +16,17 @@
   // ---- SETTINGS ----
   // Feeds are tried in this order: the first one that loads is used.
   var FEEDS = [
-    "feed.xml",       // copy of the Podcloud feed, refreshed daily by GitHub (covers, tracklists)
-    "podcast.xml"     // backup (archive.org data)
+    "feed.xml",       // main feed (covers, tracklists), refreshed daily by GitHub
+    "podcast.xml"     // backup feed
   ];
   var SHOW_NAME = "ALL 4 ONE";
-  var SHOW_SOURCE = true;    // true = small line under the list showing which feed was loaded (set to false when tested)
+  var SHOW_SOURCE = false;   // true = small line under the list showing the number of episodes
   var ACCENT = "#F28C28";    // brand orange (buttons, current episode)
-  var MAX_EPISODES = 3;      // episodes listed (0 = all of them, with search and "Show more")
+  var MAX_EPISODES = 3;      // episodes listed at first (0 = all of them, with search)
+  var MORE_STEP = 10;        // episodes added each time "Show more" is clicked
   var COVER_EFFECT = "fade";  // when the cover changes: "fade", "slide" or "none"
-  var PAGE = MAX_EPISODES > 0 ? MAX_EPISODES : 25;
+  var FIRST = MAX_EPISODES > 0 ? MAX_EPISODES : 25;
+  var STEP = MAX_EPISODES > 0 ? MORE_STEP : 25;
   // ------------------
 
   var host = document.getElementById("all4one-widget");
@@ -70,7 +72,7 @@
     '.arw{padding:6px 9px;line-height:0}' +
     '.arw svg{transition:transform .2s ease}' +
     'li.open .arw svg{transform:rotate(180deg)}' +
-    '.d{color:' + C.muted + ';font-size:12px;white-space:nowrap}' +
+    '.d{color:' + C.muted + ';font-size:12px;white-space:nowrap;min-width:92px;text-align:right}' +
     '#more{display:block;margin:16px auto}' +
     '.msg{color:' + C.muted + ';padding:16px 0}' +
     '</style>' +
@@ -185,7 +187,7 @@
   function render(reset) {
     var list = $("list");
     if (reset) { list.innerHTML = ""; shown = 0; }
-    var end = Math.min(shown + PAGE, view.length);
+    var end = Math.min(shown + (shown === 0 ? FIRST : STEP), view.length);
     for (; shown < end; shown++) {
       var ep = view[shown], li = document.createElement("li");
       var idx = eps.indexOf(ep);
@@ -245,7 +247,7 @@
     } catch (e) {}
   };
   audio.onended = function () {
-    var limit = MAX_EPISODES > 0 ? Math.min(MAX_EPISODES, eps.length) : eps.length;
+    var limit = MAX_EPISODES > 0 ? Math.min(shown, eps.length) : eps.length;
     if (current + 1 < limit) select(current + 1, true);
   };
 
@@ -262,22 +264,21 @@
       var title = tag(items[i], "title");
       var m = title.match(/ALL\s*4\s*ONE\s*#?\s*(\d+)/i);   // real number is in the title
       var im = items[i].getElementsByTagName("itunes:image")[0];
-      var dt = new Date(tag(items[i], "pubDate"));
+      var dt = new Date(tag(items[i], "pubDate") || tag(items[i], "dc:date"));
       out.push({
         title: title,
         desc: clean(tag(items[i], "description"), title),
         url: enc.getAttribute("url"),
         img: im ? im.getAttribute("href") : "",
         num: m ? parseInt(m[1], 10) : (parseInt(tag(items[i], "itunes:episode"), 10) || 0),
-        date: isNaN(dt) ? "" : dt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+        date: isNaN(dt) ? "" : dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
       });
     }
     return { eps: out, cover: img ? img.getAttribute("href") : "" };
   }
 
-  function load(n, errs) {
-    errs = errs || [];
-    if (n >= FEEDS.length) { $("msg").textContent = "Could not load the episodes. " + errs.join(" | "); return; }
+  function load(n) {
+    if (n >= FEEDS.length) { $("msg").textContent = "Could not load the episodes."; return; }
     fetch(FEEDS[n])
       .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.text(); })
       .then(function (txt) {
@@ -289,18 +290,26 @@
         $("title").textContent = SHOW_NAME;
         $("dl").style.display = "none";
         $("cover").src = defaultCover;
-        if (SHOW_SOURCE) $("src").textContent = eps.length + " episodes" + (n === 0 ? " \u2022 Updated daily" : "");
-        view = MAX_EPISODES > 0 ? eps.slice(0, MAX_EPISODES) : eps.slice();
+        if (SHOW_SOURCE) $("src").textContent = eps.length + " episodes";
+        view = eps.slice();
         opened = { 0: true };
         render(true);
       })
       .catch(function (e) {
-        errs.push((n === 0 ? "Podcloud" : "backup") + ": " + (e && e.message ? e.message : e));
-        load(n + 1, errs);
+        if (window.console) console.warn(FEEDS[n] + ": " + (e && e.message ? e.message : e));
+        load(n + 1);
       });
   }
-  load(0, []);
+  load(0);
 })();
+</script>
+<script>
+// Lets the page on your site resize this frame to fit the list (needed for "Show more").
+function a4oSend() {
+  parent.postMessage({ a4oHeight: document.body.getBoundingClientRect().height }, "*");
+}
+if (window.ResizeObserver) new ResizeObserver(a4oSend).observe(document.body);
+window.addEventListener("load", a4oSend);
 </script>
 
 </body>
